@@ -1,0 +1,183 @@
+﻿@model IEnumerable<Virca_Orders_Video>
+@{
+    ViewBag.Title = "Upload";
+}
+
+<link rel='stylesheet' href='wwwroot/css/site.css' type='text/css' media='all' />
+<script type="text/javascript">
+    function updatePost(id) {
+        var comment = document.getElementById('comment_' + id).value;
+
+        var jsondata = { id: id, comment: comment };
+        //alert(id + '; ' + comment);
+        var options = {};
+        options.url = "/Upload/updatePost";
+        options.type = "POST";
+        options.contentType = "application/json; charset=utf-8";
+        options.dataType = "json";
+        options.data = JSON.stringify(jsondata);
+        options.crossDomain = false;
+        //options.data = "id=" + id + "&comment=" + comment;
+        options.success = function (data) {
+            $("#output_" + id).html('Server returns: ' + data.success + '; ' + data.msg);
+        };
+        options.error = function (xhr) {
+            $("#output_" + id).html("Error while calling the server. " + xhr.responseText);
+        };
+        $.ajax(options);
+    }
+
+    function JumperPublish(buton, id) {
+        var FlugerFlag = '', jumper_new = 0;
+
+        if (buton == 1) {
+            var jumper = document.getElementById('jumper_id_' + id).value;
+            if (jumper == '') jumper = '1';
+            if (jumper == '0') {
+                jumper_new = 1;
+                FlugerFlag = 'Yes';
+            } else {
+                jumper_new = 0;
+                FlugerFlag = 'No';
+            }
+            //alert('jumper=' + jumper + '; flag to be saved=' + jumper_new + '; id=' + id + '; FlugerFlag=' + FlugerFlag);
+            document.getElementById('tagfield_' + id).value = '"' + FlugerFlag + '"';
+            document.getElementById('jumper_id_' + id).value = jumper_new;
+
+            //var url = 'FAQform.aspx?jump=faq_publish&tagfield=' + jumper + '&faq_id=' + param_id + '&nocache=' + new Date().getTime();
+            //setIframeSrc('ifrm', url);
+            
+            var jsondata = { id: id, status: jumper_new };
+            var options = {};
+            options.url = "/Upload/updateStatus";
+            options.type = "POST";
+            options.contentType = "application/json; charset=utf-8";
+            options.dataType = "json";
+            options.data = JSON.stringify(jsondata);
+            options.crossDomain = false;
+            options.success = function (data) {
+                $("#output_" + id).html('Server returns: ' + data.success + '; ' + data.msg);
+            };
+            options.error = function (xhr) {
+                $("#output_" + id).html("Error while calling the server. " + xhr.responseText);
+            };
+            $.ajax(options);
+            
+        }
+    }
+
+</script>
+
+
+@if (Model != null)
+{
+    if (Model.Count() > 0)
+    {
+        <h3>@ViewBag.OrderId</h3>
+        <h4>@ViewBag.TotalFound</h4>
+        <div>
+            @foreach (var item in Model)
+            {
+                <div class="movie_block" data_id="@item.Id">
+                    
+                    <object classid="clsid:9BE31822-FDAD-461B-AD51-BE1D1C159921"
+                            type="application/x-vlc-plugin" version="VideoLAN.VLCPlugin.2"
+                            codebase="http://downloads.videolan.org/pub/videolan/vlc/latest/win32/axvlc.cab"
+                            width="490" height="280" id="vlc_@item.Id" events="true">
+                        <param name="Src" value="~/UploadedFiles/@item.Filename?nocache=@DateTime.Now" />
+                        <param name="ShowDisplay" value="False" />
+                        <param name="AutoLoop" value="True" />
+                        <param name="AutoPlay" value="False" />
+                        <param name="allowfullscreen" value="false" />
+                        <embed id="emb_@item.Id" type="application/x-google-vlc-plugin" version="VideoLAN.VLCPlugin.2" pluginspage="http://www.videolan.org/" autoplay="no" loop="no" width="490" height="280"
+                               windowless="true" allowfullscreen="false" mute="false" enablejavascript="true"
+                               target="~/UploadedFiles/@Html.DisplayFor(modelItem => item.Filename)?nocache=@DateTime.Now" />
+                    </object>
+                    test
+                    @if (item.Filename.Contains(".mp4") || item.Filename.Contains(".webm") || item.Filename.Contains(".ogv") || item.Filename.Contains(".ogg") || item.Filename.Contains(".ogm"))
+                    {
+                        <video width="490" height="280" controls loop >
+                            <source src="~/UploadedFiles/@Html.DisplayFor(modelItem => item.Filename)?nocache=@DateTime.Now" type="video/mp4">
+                        </video>
+                        <script>
+                            document.getElementById('emb_@item.Id').style.display = 'none';
+                            document.getElementById('vlc_@item.Id').style.display = 'none';
+                        </script>
+                    }
+                    test2
+
+                    @Html.ActionLink("Download", "Download", new { filename = item.Filename }): @Html.DisplayFor(modelItem => item.Filename)<br />
+                    <table width="100%">
+                        <tr>
+                            <td>
+                                <textarea rows="3" cols="80" id="comment_@item.Id" class="movie_comment" placeholder="Your comment to this video...">@Html.DisplayFor(modelItem => item.Add_info)</textarea>
+                            </td>
+                            <td><input type="button" value="Save" onclick="updatePost(@item.Id)" />
+                                <br />Is cheating found?
+                                <input type="button" id="tagfield_@item.Id" value="@(item.Status == 1 ? "Yes" : "No")" onclick="JumperPublish(1,@item.Id)" />
+                                <input type="hidden" id="jumper_id_@item.Id" value="@item.Status" />
+                            </td>
+                        </tr>
+                    </table>
+
+                    <table width="100%">
+                        <tr>
+                            <td>
+                                <div id="output_@item.Id"></div>
+                            </td>
+                            <td>
+                                <div class="right">
+                                    
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            }
+        </div>
+    }
+}
+
+<!--
+<OBJECT classid="clsid:9BE31822-FDAD-461B-AD51-BE1D1C159921"
+        codebase="http://downloads.videolan.org/pub/videolan/vlc/latest/win32/axvlc.cab"
+        width="640" height="480" id="vlc" events="True">
+    <param name="Src" value="small.mp4" />
+    <param name="ShowDisplay" value="True" />
+    <param name="AutoLoop" value="False" />
+    <param name="AutoPlay" value="True" />
+    <param name="allowfullscreen" value="false" />
+    <embed id="vlcEmb" type="application/x-google-vlc-plugin" version="VideoLAN.VLCPlugin.2" autoplay="yes" loop="no" width="640" height="480"
+           target="../../UploadedFiles/small.mp4"></embed>
+</OBJECT>
+    http://localhost:11593/UploadedFiles/drop.avi?z
+-->
+
+<!--
+<object classid="clsid:9BE31822-FDAD-461B-AD51-BE1D1C159921"
+        type="application/x-vlc-plugin" version="VideoLAN.VLCPlugin.2"
+        codebase="http://downloads.videolan.org/pub/videolan/vlc/latest/win32/axvlc.cab"
+        width="490" height="300" id="vlc_4" events="true">
+    <param name="Src" value="http://techslides.com/demos/sample-videos/small.mp4" />
+    <param name="ShowDisplay" value="True" />
+    <param name="AutoLoop" value="True" />
+    <param name="AutoPlay" value="False" />
+    <param name="allowfullscreen" value="false" />
+    <embed id="emb_4" type="application/x-google-vlc-plugin" version="VideoLAN.VLCPlugin.2" pluginspage="http://www.videolan.org/" autoplay="no" loop="no" width="490" height="300"
+           windowless="true" allowfullscreen="false" mute="false"
+           target="http://techslides.com/demos/sample-videos/small.mp4" />
+</object>
+-->
+
+
+<div class="clear"></div>
+<p> &nbsp; </p>
+<p> &nbsp; </p>
+<h2>Upload new file</h2>
+
+<form asp-controller="Upload" asp-action="Upload" method="post" enctype="multipart/form-data">
+    <p>Order number: @Html.TextBox("OrderNum", "")</p>
+    <input type="file" name="file" />
+    <button type="submit">Upload File</button>
+    @ViewBag.Message
+</form>
